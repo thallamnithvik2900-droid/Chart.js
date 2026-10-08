@@ -51,19 +51,29 @@ export default class CategoryScale extends Scale {
     this._startValue = undefined;
     this._valueRange = 0;
     this._addedLabels = [];
+
+    // Keep an internal copy of labels.
+    this._labels = [];
   }
 
   init(scaleOptions) {
+    // Create an internal copy of the user-provided labels.
+    this._labels = this.getLabels().slice();
+
     const added = this._addedLabels;
+
     if (added.length) {
-      const labels = this.getLabels();
+      const labels = this._labels;
+
       for (const {index, label} of added) {
         if (labels[index] === label) {
           labels.splice(index, 1);
         }
       }
+
       this._addedLabels = [];
     }
+
     super.init(scaleOptions);
   }
 
@@ -71,9 +81,13 @@ export default class CategoryScale extends Scale {
     if (isNullOrUndef(raw)) {
       return null;
     }
-    const labels = this.getLabels();
+
+    // Use the internal copy instead of the user's original labels.
+    const labels = this._labels;
+
     index = isFinite(index) && labels[index] === raw ? index
       : findOrAddLabel(labels, raw, valueOrDefault(index, raw), this._addedLabels);
+
     return validIndex(index, labels.length - 1);
   }
 
@@ -85,8 +99,9 @@ export default class CategoryScale extends Scale {
       if (!minDefined) {
         min = 0;
       }
+
       if (!maxDefined) {
-        max = this.getLabels().length - 1;
+        max = this._labels.length - 1;
       }
     }
 
@@ -99,10 +114,14 @@ export default class CategoryScale extends Scale {
     const max = this.max;
     const offset = this.options.offset;
     const ticks = [];
-    let labels = this.getLabels();
 
-    // If we are viewing some subset of labels, slice the original array
-    labels = (min === 0 && max === labels.length - 1) ? labels : labels.slice(min, max + 1);
+    let labels = this._labels;
+
+    // If we are viewing some subset of labels,
+    // slice the internal array.
+    labels = (min === 0 && max === labels.length - 1)
+      ? labels
+      : labels.slice(min, max + 1);
 
     this._valueRange = Math.max(labels.length - (offset ? 0 : 1), 1);
     this._startValue = this.min - (offset ? 0.5 : 0);
@@ -110,6 +129,7 @@ export default class CategoryScale extends Scale {
     for (let value = min; value <= max; value++) {
       ticks.push({value});
     }
+
     return ticks;
   }
 
@@ -118,8 +138,8 @@ export default class CategoryScale extends Scale {
   }
 
   /**
-	 * @protected
-	 */
+   * @protected
+   */
   configure() {
     super.configure();
 
@@ -129,27 +149,34 @@ export default class CategoryScale extends Scale {
     }
   }
 
-  // Used to get data value locations. Value can either be an index or a numerical value
+  // Used to get data value locations.
+  // Value can either be an index or a numerical value.
   getPixelForValue(value) {
     if (typeof value !== 'number') {
       value = this.parse(value);
     }
 
-    return value === null ? NaN : this.getPixelForDecimal((value - this._startValue) / this._valueRange);
+    return value === null
+      ? NaN
+      : this.getPixelForDecimal((value - this._startValue) / this._valueRange);
   }
 
   // Must override base implementation because it calls getPixelForValue
-  // and category scale can have duplicate values
+  // and category scale can have duplicate values.
   getPixelForTick(index) {
     const ticks = this.ticks;
+
     if (index < 0 || index > ticks.length - 1) {
       return null;
     }
+
     return this.getPixelForValue(ticks[index].value);
   }
 
   getValueForPixel(pixel) {
-    return Math.round(this._startValue + this.getDecimalForPixel(pixel) * this._valueRange);
+    return Math.round(
+      this._startValue + this.getDecimalForPixel(pixel) * this._valueRange
+    );
   }
 
   getBasePixel() {
