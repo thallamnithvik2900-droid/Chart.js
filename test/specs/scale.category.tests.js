@@ -113,6 +113,32 @@ describe('Category scale tests', function() {
 
   });
 
+  it('Should not modify the original labels array when generating missing labels', function() {
+    var labels = ['a'];
+    var chart = window.acquireChart({
+      type: 'line',
+      data: {
+        datasets: [{
+          data: [
+            {x: 'a', y: 1},
+            {x: 'b', y: 2}
+          ]
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            type: 'category',
+            labels: labels
+          }
+        }
+      }
+    });
+
+    expect(labels).toEqual(['a']);
+    expect(getLabels(chart.scales.x)).toEqual(['a', 'b']);
+  });
+
   it('should parse only to a valid index', function() {
     var chart = window.acquireChart({
       type: 'line',

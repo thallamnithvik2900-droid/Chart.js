@@ -23,7 +23,7 @@ function findOrAddLabel(labels, raw, index, addedLabels) {
 const validIndex = (index, max) => index === null ? null : _limitValue(Math.round(index), 0, max);
 
 function _getLabelForValue(value) {
-  const labels = this.getLabels();
+  const labels = this._labels;
 
   if (value >= 0 && value < labels.length) {
     return labels[value];
@@ -57,6 +57,8 @@ export default class CategoryScale extends Scale {
   }
 
   init(scaleOptions) {
+    this.options = scaleOptions.setContext(this.getContext());
+
     // Create an internal copy of the user-provided labels.
     this._labels = this.getLabels().slice();
 
